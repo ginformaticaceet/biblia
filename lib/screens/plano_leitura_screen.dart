@@ -211,7 +211,7 @@ class _PlanoLeituraScreenState extends State<PlanoLeituraScreen> {
             child: ListView.separated(
               padding: const EdgeInsets.only(bottom: 16),
               itemCount: plano.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 4),
+              separatorBuilder: (_, _) => const SizedBox(height: 4),
               itemBuilder: (context, index) {
                 final diaPlano = plano[index];
                 final bool lido = diasLidos.contains(diaPlano.dia);

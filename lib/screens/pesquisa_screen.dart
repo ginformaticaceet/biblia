@@ -1,6 +1,7 @@
 // lib/screens/pesquisa_screen.dart
 
 import 'package:flutter/material.dart';
+
 import '../controllers/bible_controller.dart';
 import '../models/bible_model.dart';
 import '../services/bible_service.dart';
@@ -23,6 +24,9 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
   List<Map<String, dynamic>> resultados = [];
 
   bool carregando = true;
+
+  // 🔥 índice em memória para acelerar a pesquisa
+  final List<_IndicePesquisa> _indice = [];
 
   @override
   void initState() {
@@ -49,7 +53,7 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
     carregarBiblia();
   }
 
-  /// 🔥 carrega a Bíblia atual
+  /// 🔥 carrega a Bíblia atual e monta o índice de pesquisa
   Future<void> carregarBiblia() async {
     setState(() {
       carregando = true;
@@ -59,9 +63,49 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
 
     if (!mounted) return;
 
+    // 🔥 monta o índice uma única vez para deixar a busca rápida
+    final List<_IndicePesquisa> novoIndice = [];
+
+    for (final book in b.books) {
+      // 🔎 índice do livro
+      novoIndice.add(
+        _IndicePesquisa(
+          tipo: "livro",
+          book: book,
+          livro: book.name,
+          capitulo: null,
+          versiculo: null,
+          texto: book.name,
+          textoNormalizado: _normalizarTexto(book.name),
+        ),
+      );
+
+      // 🔎 índice de todos os versículos
+      for (int c = 0; c < book.chapters.length; c++) {
+        for (int v = 0; v < book.chapters[c].length; v++) {
+          final versiculo = book.chapters[c][v];
+
+          novoIndice.add(
+            _IndicePesquisa(
+              tipo: "versiculo",
+              book: book,
+              livro: book.name,
+              capitulo: c + 1,
+              versiculo: v + 1,
+              texto: versiculo,
+              textoNormalizado: _normalizarTexto(versiculo),
+            ),
+          );
+        }
+      }
+    }
+
     setState(() {
       bible = b;
       resultados = [];
+      _indice
+        ..clear()
+        ..addAll(novoIndice);
       carregando = false;
     });
   }
@@ -96,13 +140,10 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
         .replaceAll('ç', 'c');
   }
 
-  /// 🔎 pesquisa livros e versículos em tempo real
+  /// 🔎 pesquisa em tempo real usando o índice já pronto
   void pesquisar(String palavra) {
-    if (bible == null) return;
-
     final termo = _normalizarTexto(palavra);
 
-    // 🔥 se o campo estiver vazio, limpa os resultados
     if (termo.isEmpty) {
       setState(() {
         resultados = [];
@@ -110,41 +151,13 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
       return;
     }
 
-    final List<Map<String, dynamic>> encontrados = [];
-
-    // 🔎 pesquisa por nome do livro
-    for (final book in bible!.books) {
-      if (_normalizarTexto(book.name).contains(termo)) {
-        encontrados.add({
-          "tipo": "livro",
-          "book": book,
-          "livro": book.name,
-        });
-      }
-    }
-
-    // 🔎 pesquisa por conteúdo dos versículos
-    for (final book in bible!.books) {
-      for (int c = 0; c < book.chapters.length; c++) {
-        for (int v = 0; v < book.chapters[c].length; v++) {
-          final versiculo = book.chapters[c][v];
-
-          if (_normalizarTexto(versiculo).contains(termo)) {
-            encontrados.add({
-              "tipo": "versiculo",
-              "book": book,
-              "livro": book.name,
-              "capitulo": c + 1,
-              "versiculo": v + 1,
-              "texto": versiculo,
-            });
-          }
-        }
-      }
-    }
+    // 🔥 filtra em cima do índice já normalizado
+    final encontrados = _indice.where((item) {
+      return item.textoNormalizado.contains(termo);
+    }).toList();
 
     setState(() {
-      resultados = encontrados;
+      resultados = encontrados.map((e) => e.toMap()).toList();
     });
   }
 
@@ -240,7 +253,7 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
                         borderSide: BorderSide.none,
                       ),
                     ),
-                    // 🔥 pesquisa enquanto digita
+                    // 🔥 pesquisa imediata enquanto digita
                     onChanged: pesquisar,
                     onSubmitted: pesquisar,
                   ),
@@ -381,5 +394,46 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
               ],
             ),
     );
+  }
+}
+
+/// 🔥 item interno para acelerar a pesquisa
+class _IndicePesquisa {
+  final String tipo;
+  final Book book;
+  final String livro;
+  final int? capitulo;
+  final int? versiculo;
+  final String texto;
+  final String textoNormalizado;
+
+  _IndicePesquisa({
+    required this.tipo,
+    required this.book,
+    required this.livro,
+    required this.capitulo,
+    required this.versiculo,
+    required this.texto,
+    required this.textoNormalizado,
+  });
+
+  /// 🔥 converte para o formato usado pela tela
+  Map<String, dynamic> toMap() {
+    final map = <String, dynamic>{
+      "tipo": tipo,
+      "book": book,
+      "livro": livro,
+      "texto": texto,
+    };
+
+    if (capitulo != null) {
+      map["capitulo"] = capitulo;
+    }
+
+    if (versiculo != null) {
+      map["versiculo"] = versiculo;
+    }
+
+    return map;
   }
 }

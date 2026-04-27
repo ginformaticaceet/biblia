@@ -61,7 +61,7 @@ class _VersaoScreenState extends State<VersaoScreen> {
       body: ListView.separated(
         padding: const EdgeInsets.all(12),
         itemCount: versoes.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        separatorBuilder: (_, _) => const SizedBox(height: 8),
         itemBuilder: (context, index) {
           final entry = versoes.entries.elementAt(index);
           final bool selecionado = entry.key == versaoAtual;

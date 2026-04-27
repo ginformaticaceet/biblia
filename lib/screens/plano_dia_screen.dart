@@ -61,7 +61,7 @@ class _PlanoDiaScreenState extends State<PlanoDiaScreen> {
             Expanded(
               child: ListView.separated(
                 itemCount: widget.planoDia.leituras.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
+                separatorBuilder: (_, _) => const SizedBox(height: 8),
                 itemBuilder: (context, index) {
                   final leitura = widget.planoDia.leituras[index];
 
