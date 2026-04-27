@@ -6,8 +6,7 @@ Um aplicativo simples e prático para leitura da Bíblia, versículo do dia e de
 
 ## 📥 Baixar o App
 
-👉 [Clique aqui para baixar o APK](https://github.com/ginformaticaceet/biblia/releases/download/v1.0.1/Biblia.apk)
-
+👉 [Clique aqui para baixar o APK](https://github.com/ginformaticaceet/biblia/releases/download/v1.0.1/Biblia_1.0.1.apk)
 ---
 
 ## ✨ Funcionalidades
